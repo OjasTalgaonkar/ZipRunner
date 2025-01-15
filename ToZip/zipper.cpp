@@ -1,14 +1,22 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <iterator>
+#include <queue>
 #include <string>
 #include <vector>
 
 struct HuffNode {
   char letter;
   int freq;
-  HuffNode *left;
   HuffNode *right;
+  HuffNode *left;
+};
+
+struct Compare {
+  bool operator()(HuffNode a, HuffNode b) {
+    // Custom comparison: smallest element has the highest priority
+    return a.freq > b.freq;
+  }
 };
 
 int main() {
@@ -40,10 +48,16 @@ int main() {
         continue;
       }
     }
+
+    std::sort(huffnodes.begin(), huffnodes.end(),
+              [](const HuffNode &a, const HuffNode &b) {
+                return a.freq < b.freq;
+              }); // sorts the vector in ascending order by frequency
+
+    std::priority_queue<HuffNode, std::vector<HuffNode>, Compare> tree;
+
     for (HuffNode temp : huffnodes) {
       std::cout << temp.letter << temp.freq << " ";
     }
   }
 }
-
-void addHuffNode(HuffNode *start, char single) {}
