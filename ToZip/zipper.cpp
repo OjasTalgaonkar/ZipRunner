@@ -22,6 +22,25 @@ struct Compare {
   }
 };
 
+void serializeTreeToBuffer(HuffNode *root, std::string &buffer, int *bitcount) {
+  if (!root) {
+    buffer.push_back('N'); // Use 'N' as a marker for null nodes
+    return;
+  }
+
+  if (root->letter != '\0') {
+    buffer.push_back('L');          // Leaf node marker
+    buffer.push_back(root->letter); // Store the character
+    *bitcount += 2;                 // Increment bit count for character
+  } else {
+    buffer.push_back('I'); // Internal node marker
+    (*bitcount)++;
+  }
+
+  serializeTreeToBuffer(root->left, buffer, bitcount);
+  serializeTreeToBuffer(root->right, buffer, bitcount);
+}
+
 void generateEncodingMap(HuffNode *root, const std::string &prefix,
                          std::unordered_map<char, std::string> &encodingMap) {
   if (!root)
@@ -85,6 +104,26 @@ int main() {
     std::cerr << "Failed to open output file." << std::endl;
     return 1;
   }
+
+  // Serialize the tree into a buffer
+  std::string treeBuffer;
+  int bits = 0;
+  serializeTreeToBuffer(root, treeBuffer, &bits);
+
+  // Write the bit count between % symbols
+  outputFile.put('%'); // Opening %
+  outputFile.write(reinterpret_cast<const char *>(&bits), sizeof(bits));
+  outputFile.put('%'); // Closing %
+
+  std::cout << bits << " letters written for tree\n";
+
+  // Write the serialized tree
+  outputFile.write(treeBuffer.data(), treeBuffer.size());
+
+  outputFile.write("/$/", 3);
+  std::cout << "End delimiter /$/ written." << std::endl;
+
+  outputFile.flush();
 
   unsigned char buffer = 0;
   int bitCount = 0;
