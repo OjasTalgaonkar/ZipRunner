@@ -84,6 +84,11 @@ int main() {
     printf("File doesnt open!", stderr);
     return 0;
   }
+  std::ofstream unzip("filesToTest\\unzipped.txt");
+  if (!unzip) {
+    printf("File doesnt open!", stderr);
+    return 0;
+  }
 
   HuffNode *root = nullptr;
   std::string holder = "";
@@ -100,19 +105,19 @@ int main() {
     std::cout << "left not made";
   }
 
-  // HuffNode *currentNode = root;
-  // for (char c : holder) {
-  //   if (c == '1') {
-  //     currentNode = currentNode->right;
-  //     std::cout << " works-right ";
-  //   } else if (c == '0') {
-  //     currentNode = currentNode->left;
-  //     std::cout << " works-left ";
-  //   }
+  HuffNode *currentNode = root;
+  for (char c : holder) {
+    if (c == '1') {
+      currentNode = currentNode->right;
+      // std::cout << " works-right ";
+    } else if (c == '0') {
+      currentNode = currentNode->left;
+      // std::cout << " works-left ";
+    }
 
-  //   if (currentNode->left == nullptr && currentNode->right == nullptr) {
-  //     std::cout << currentNode->letter; // Output the decoded character
-  //     currentNode = root;               // Reset to root for the next
-  //   }
-  // }
+    if (currentNode->left == nullptr && currentNode->right == nullptr) {
+      unzip.put(currentNode->letter); // Output the decoded character
+      currentNode = root;             // Reset to root for the next
+    }
+  }
 }
