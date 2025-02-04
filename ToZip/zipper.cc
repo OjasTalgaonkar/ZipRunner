@@ -25,6 +25,7 @@ struct Compare {
 void serializeTreeToBuffer(HuffNode *root, std::string &buffer, int *bitcount) {
   if (!root) {
     buffer.push_back('N'); // Use 'N' as a marker for null nodes
+    (*bitcount)++;
     return;
   }
 
@@ -55,7 +56,7 @@ void generateEncodingMap(HuffNode *root, const std::string &prefix,
 }
 
 int main() {
-  std::ifstream file("input.txt");
+  std::ifstream file("filesToTest\\input.txt");
   if (!file.is_open()) {
     std::cerr << "Failed to open input file." << std::endl;
     return 1;
@@ -99,7 +100,7 @@ int main() {
   std::unordered_map<char, std::string> encodingMap;
   generateEncodingMap(root, "", encodingMap);
 
-  std::ofstream outputFile("output.bin", std::ios::binary);
+  std::ofstream outputFile("filesToTest\\output.bin", std::ios::binary);
   if (!outputFile.is_open()) {
     std::cerr << "Failed to open output file." << std::endl;
     return 1;
@@ -119,9 +120,6 @@ int main() {
 
   // Write the serialized tree
   outputFile.write(treeBuffer.data(), treeBuffer.size());
-
-  outputFile.write("/$/", 3);
-  std::cout << "End delimiter /$/ written." << std::endl;
 
   outputFile.flush();
 
