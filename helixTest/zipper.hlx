@@ -1,34 +1,161 @@
-#[trivially_import(true)]
+ffi "c++" import "fstream";
+ffi "c++" import "iostream";
+ffi "c++" import "memory";
+ffi "c++" import "queue";
+ffi "c++" import "string";
+ffi "c++" import "unordered_map";
+ffi "c++" import "vector";
 
-ffi "c++" import "zipper.hh";
+struct HuffNode {
+    let letter: char;     // Character (leaf node) or '\0' (internal node)
+    let freq: i32;        // Frequency of the character
+    let left:  unsafe *HuffNode = nullptr;  // Left child
+    let right: unsafe *HuffNode = nullptr; // Right child
+};
+
+class Compare {
+    op () fn (self, a: const unsafe *HuffNode, b: const unsafe *HuffNode) -> bool {
+        return a->freq > b->freq; // Higher frequency => lower priority
+    }
+};
 
 fn serializeTreeToBuffer(root: unsafe *HuffNode, buffer: unsafe *string, bitcount: unsafe *i32) {
-    if ( root != &null ){
-        
-        
-        
+    if !root {
+        (*buffer).push_back('N'); // Use 'N' as a marker for null nodes
+        (*bitcount)++;
+        return;
     }
+
+    if root->letter != '\0' {
+        (*buffer).push_back('L');          // Leaf node marker
+        (*buffer).push_back(root->letter); // Store the character
+        (*bitcount) += 2;                 // Increment bit count for character
+        // *(bitcount += 2)
+    } else {
+        (*buffer).push_back('I'); // Internal node marker
+        (*bitcount)++;
+    }
+
+    serializeTreeToBuffer(root->left, buffer, bitcount);
+    serializeTreeToBuffer(root->right, buffer, bitcount);
 }
 
-void generateEncodingMap(HuffNode *root, const ::std::string &prefix,::std::unordered_map<char, ::std::string> &encodingMap);
- 
-fn create_node(l: char, f: i32, lc: unsafe *HuffNode = nullptr, rc: unsafe *HuffNode = nullptr) -> unsafe *HuffNode {
-    let node = malloc(sizeof(HuffNode)) as unsafe *HuffNode;
-    node->letter = l;
-    node->freq = f;
-    node->left = lc;
-    node->right = rc;
+fn generateEncodingMap(root: unsafe *HuffNode, prefix: const unsafe *string, encodingMap: *map::<char, string>) {
+    if !root:
+        return;
 
-    return node;
+    if (root->letter != '\0'): // Leaf node
+        (*encodingMap)[root->letter] = *prefix;
+
+    let left_val  = (*prefix) + "0";
+    let right_val = (*prefix) + "1";
+
+    generateEncodingMap(root->left,  &left_val, encodingMap); // THIS WILL SEG FAULT
+    generateEncodingMap(root->right, &right_val, encodingMap);
 }
 
 fn main() -> i32 {
-    let node: unsafe *HuffNode = create_node('\0', 0);
-    finally: free(node);
+    let file = libcxx::ifstream("/Volumes/Development/Projects/ZipRunner/ToZip/filesToTest/input.txt");
+    
+    if !file.is_open() {
+        print("Failed to open input file.");
+        return 1;
+    }
 
-    let str: string = "test";
-    let in_t: i32 = 0;
+    // Frequency map to count occurrences of each character
+    let freqMap: map::<char, i32>;
+    let inputData: string;
+    let line: string;
 
-    serializeTreeToBuffer(node, &str, &in_t);
+    while libcxx::getline(file, line) {
+        inputData += line; // Accumulate the input data
+        
+        for c: char in line {
+            freqMap[c]++;
+        }
+    }
+
+    file.close();
+
+    let tree: libcxx::priority_queue::<unsafe *HuffNode, vec::<unsafe *HuffNode>, Compare>;
+
+    for entry in freqMap {
+        tree.push(_NEW(HuffNode(entry.first, entry.second)));
+    }
+
+    while tree.size() > 1 {
+        let left:  unsafe *HuffNode = tree.top();
+        tree.pop();
+        
+        let right: unsafe *HuffNode = tree.top();
+        tree.pop();
+
+        let parent: unsafe *HuffNode = _NEW(HuffNode('\0', left->freq + right->freq, left, right));
+        tree.push(parent);
+    }
+
+    let root: unsafe *HuffNode = tree.top();
+    tree.pop();
+
+    // Generate encoding map
+    let encodingMap: map::<char, string>;
+    let encoding: string = "";
+    
+    generateEncodingMap(root, &encoding, &encodingMap);
+
+    let outputFile = libcxx::ofstream("/Volumes/Development/Projects/ZipRunner/ToZip/filesToTest/output.bin", libcxx::ios::binary);
+    
+    if (!outputFile.is_open()) {
+        print("Failed to open output file.");
+        return 1;
+    }
+
+    // Serialize the tree into a buffer
+    let treeBuffer: string;
+    let bits: i32 = 0;
+
+    serializeTreeToBuffer(root, &treeBuffer, &bits);
+
+    // Write the bit count between % symbols
+    outputFile.put('%'); // Opening %
+    outputFile.write(((&bits) as unsafe *char), sizeof(bits));
+    outputFile.put('%'); // Closing %
+
+    print(f"{bits} letters written for tree");
+
+    // Write the serialized tree
+    outputFile.write(treeBuffer.data(), treeBuffer.size());
+
+    outputFile.flush();
+
+    let buffer: u8 = 0;
+    let bitCount: i32 = 0;
+
+    // Write encoded data as binary
+    for c in inputData {
+        const code: unsafe *string = &encodingMap[c];
+        for bit in *code {
+            null;
+
+            buffer = (buffer << 1) | (bit - '0');
+            ++bitCount;
+
+            if bitCount == 8 {
+                outputFile.put(buffer); // Write full byte
+                buffer = 0;
+                bitCount = 0;
+            }
+        }
+    }
+
+    // Write any remaining bits (if not a full byte)
+    if bitCount > 0 {
+        buffer = buffer << (8 - bitCount); // Pad remaining bits with 0
+        outputFile.put(buffer);
+    }
+
+    outputFile.close();
+    print("Huffman encoding written to output.bin as binary.");
+
     return 0;
 }
