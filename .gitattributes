@@ -1,3 +1,5 @@
 *.hlx linguist-language=Helix
 *.c linguist-language=C
 *.go linguist-language=Go
+*.hlx linguist-vendored=false
+
