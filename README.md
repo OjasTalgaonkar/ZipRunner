@@ -20,7 +20,7 @@ As someone whose laptop only has 450 GB of storage, I wanted to try making it so
 - **Cross-Platform Support**: Compatible with multiple operating systems, ensuring broad usability.
 - **Resource Optimization**: Saves disk space and reduces clutter by eliminating the need for extracted files.
 
-##Current Progress
+## Current Progress
 
 The "prep" folder contains all my practice programs for features that will be essential in building ZipRunner. These include:
 
