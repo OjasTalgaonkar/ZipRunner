@@ -12,7 +12,7 @@
 
 ## Motivation
 
-Traditional methods of handling compressed files involve extracting the contents before execution, which can be time-consuming and require additional storage space. ZipRunner addresses these challenges by enabling direct execution from compressed archives, thereby optimizing both time and storage resources.
+As someone whose laptop only has 450 GB of storage, I wanted to try making it so that I can still play my favorite games without having them constantly take up a sizable chunk of my storage. An already existing tool like 7zip, unzips folders before execution and then zips them back up at termination, but my goal is to run the compressed files themselves.
 
 ## Features
 

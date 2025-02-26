@@ -1,0 +1,19 @@
+
+int main(int argc, char **argv) 
+{
+    
+  clear()
+  initialize()
+  loadprogram()
+
+  // Emulation loop
+  for(;;)
+  {
+    emulate{  //1 cycle
+        translate encoded data
+        run binary
+    }
+  }
+
+  return 0;
+}
