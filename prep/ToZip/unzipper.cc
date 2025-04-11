@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstddef>
 #include <cstdio>
 #include <fstream>
@@ -81,43 +82,54 @@ HuffNode *readZipFile(std::ifstream &zip, std::string &holder) {
 int main() {
   std::ifstream zip("filesToTEst\\output.bin", std::ios::binary);
   if (!zip) {
-    printf("File doesnt open!", stderr);
+    printf("File doesn't open!", stderr);
     return 0;
   }
   std::ofstream unzip("filesToTest\\unzipped.txt");
   if (!unzip) {
-    printf("File doesnt open!", stderr);
+    printf("File doesn't open!", stderr);
     return 0;
   }
 
   HuffNode *root = nullptr;
   std::string holder = "";
   root = readZipFile(zip, holder);
-  // std::cout << holder;
-  if (root->letter != '\0') { // tree build check
-    std::cout << "this aint built right";
-  }
 
+  // Tree validation check
+  if (root->letter != '\0') { // Tree build check
+    std::cout << "This isn't built right" << std::endl;
+  }
   if (root->right == nullptr) {
-    std::cout << "right not made";
+    std::cout << "Right not made" << std::endl;
   }
   if (root->left == nullptr) {
-    std::cout << "left not made";
+    std::cout << "Left not made" << std::endl;
   }
 
   HuffNode *currentNode = root;
+
   for (char c : holder) {
+    // Start timing each byte translation
+    auto start = std::chrono::high_resolution_clock::now();
+
     if (c == '1') {
       currentNode = currentNode->right;
-      // std::cout << " works-right ";
     } else if (c == '0') {
       currentNode = currentNode->left;
-      // std::cout << " works-left ";
     }
 
+    // Check for leaf node (character) to decode
     if (currentNode->left == nullptr && currentNode->right == nullptr) {
       unzip.put(currentNode->letter); // Output the decoded character
       currentNode = root;             // Reset to root for the next
     }
+
+    // End timing after processing each character
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<long long, std::nano> ns_duration = end - start;
+    std::cout << "Time to decode byte: " << ns_duration.count()
+              << " nanoseconds" << "\n";
   }
+
+  return 0;
 }
